@@ -148,7 +148,7 @@
 }
 
 .cover-red {
-  @include linear-gradient(140deg, rgba(darken($red, 30%),.6) 20%, rgba(darken($red, 50%),.8));
+  @include linear-gradient(140deg, rgba(darken($red, 30%),.3) 20%, rgba(darken($red, 50%),.8));
 }
 
 .cover-orange {
