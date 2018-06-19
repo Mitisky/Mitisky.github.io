@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "分布式大表Join计算优化"
+title:  "SparkSQL做Join问题汇总"
 date:   2018-6-19  +0800
 categories: join
 ---
