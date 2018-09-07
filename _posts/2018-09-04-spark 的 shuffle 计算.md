@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Spark 目录"
+title:  "Spark的 Shuffle 计算"
 date:   2018-9-4  +0800
 categories: spark 
 ---
