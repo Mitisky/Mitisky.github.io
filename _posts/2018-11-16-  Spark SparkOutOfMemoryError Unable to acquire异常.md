@@ -6,8 +6,6 @@ categories:  spark
 ---
 
 
-# Spark SparkOutOfMemoryError Unable to acquire异常
-
 
 异常信息如下
 
@@ -20,8 +18,8 @@ Caused by: org.apache.spark.memory.SparkOutOfMemoryError: Unable to acquire 28 b
 	at org.apache.spark.sql.execution.UnsafeExternalRowSorter.insertRow(UnsafeExternalRowSorter.java:135)
 ```
 
-这是一个内存溢出的问题，但不是严格意义上 JVM 的内存不足，只是 Spark 自身认为的内存不足而已。
-目前，遇到的会出现这个异常的一个场景是，数据经过shuffle 后的partition很多，然后后续调用了一个剧烈的Coalesce操作，比如Coalesce(1)。
+这是一个内存溢出的问题，但不是严格意义上 JVM 无法分配的内存不足，而是 Spark 计算得出的内存不足。
+目前在一个 shuffle 场景会遇到这个异常。具体场景如下，数据经过shuffle 后的partition很多，然后后续调用了一个剧烈的Coalesce操作，比如Coalesce(1)。
 
 解决这个问题需要对UnsafeExternalSorter和Spark内存管理有一定了解。我们知道UnsafeExternalSorter对象会在内存不足的时候主动 spill 数据到磁盘来释放内存，但是在这里仿佛失效了。实际上 spill 操作并没有失效，而是由于 spark 避免其它调用者对数据操作，而保留了一个内存页。
 

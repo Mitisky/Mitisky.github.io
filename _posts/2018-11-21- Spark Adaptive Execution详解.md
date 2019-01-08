@@ -69,7 +69,7 @@ class ExchangeCoordinator(
 * targetPostShuffleInputSize 期望 shuffle 后的块的大小，通过这个参数来确定 reduce 的 partition 数量
 * minNumPostShufflePartitions 通过这个参数确保块的最小值
 
-### coordinator流程
+### Coordinator流程
 
 * 当我们开始执行物理计划的时候， coordinator中注册的 `ShuffleExchangeExec`会调用 `postShuffleRDD` 获得相应的shuffle 后的`ShuffledRowRDD`
 * 如果coordinator 能够确定如何分配 shuffle 数据，那么会立刻返回shuffle 后的`ShuffledRowRDD`
@@ -96,6 +96,8 @@ class ExchangeCoordinator(
    - reduce输入 partition 3: pre-shuffle partition 3 and 4 (size 50 MB)
 ```
 
+
+
 ## 使用方法
 
 通过 spark.sql.adaptive.enabled=true 启用 Adaptive Execution 
@@ -108,6 +110,34 @@ class ExchangeCoordinator(
 分析上面来看，指定 Partition 的大小是比指定的Partition个数更为合理的选择。数据量不特别多时候性能提升明显。
 但这并不代表Adaptive Execution就是一个万金油。因为指定了 Partition 大小意味着，数据量增多的情况下，Partition 个数会变多，这一点需要注意。
 例如，我们在实际的 ETL 操作的过程中，中间有落盘操作，如果直接将Partition 落盘为一个实际块的话，会导致大量的文件的创建，而对于分布式文件系统，文件的创建通常是很重的操作，因此这并不是一个好的实现，必须要对块进行再次的处理后才能落盘。
+
+
+### 个人观点
+
+下面的代码是ShuffleExchangeExec的 execute 实现
+
+
+```
+  protected override def doExecute(): RDD[InternalRow] = attachTree(this, "execute") {
+    if (cachedShuffleRDD == null) {
+      cachedShuffleRDD = coordinator match {
+        case Some(exchangeCoordinator) =>
+          val shuffleRDD = exchangeCoordinator.postShuffleRDD(this)
+          assert(shuffleRDD.partitions.length == newPartitioning.numPartitions)
+          shuffleRDD
+        case _ =>
+          val shuffleDependency = prepareShuffleDependency()
+          preparePostShuffleRDD(shuffleDependency)
+      }
+    }
+    cachedShuffleRDD
+  }
+```
+
+这里要注意的是 ` exchangeCoordinator.postShuffleRDD(this)` 这部分会将先将子类的 Spark Plan 计算出 RDD 并提交执行。
+我在看 Spark Plan 的优化时候就有疑惑，spark 按照Logical Plan => Phyiscal Plan => RDD => Result这样的顺序结果能够最优吗？基于 CBO 的优化，在执行过程中可以获得更多有用的信息这部分这个执行模型是无法满足的。
+这里实际上有点打破了这个顺序模型,成为了一个递归的结构 Phyiscal Plan => RDD => Result => Phyiscal Plan => RDD => Result。但是现在的实现更像是一个性能的补丁。可能未来类似补丁多了，或许也会重构成为上述的模型结构吧。个人在实际项目中非常不放心类似超出原有结构的扩展。
+
 
 ## 参考
 [Issue](https://issues.apache.org/jira/browse/SPARK-9850)
