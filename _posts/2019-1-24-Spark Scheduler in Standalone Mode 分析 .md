@@ -1,12 +1,11 @@
 ---
 layout: post
-title:  "SparkSQL Adaptive Execution详解"
-date:   2018-12-11  +0800
+title:  "Spark Scheduler in Standalone Mode 分析"
+date:   2019-1-24  +0800
 categories:  spark
 ---
 
 
-# Spark Scheduler in Standalone Mode 分析 
 
 文中代码基于Spark 版本2.3.0
 
