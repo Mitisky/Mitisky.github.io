@@ -2,7 +2,6 @@
 layout: post
 title:  "Spark Scheduler in Standalone Mode 分析"
 date:   2019-12-11  +0800
-Scheduler in Standalone Mode 分析 .md
 categories:  spark
 ---
 
